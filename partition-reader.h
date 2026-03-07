@@ -10,7 +10,7 @@
 #define MAX_PARTS 4
 
 #define PART_TABLE_LOC 0x1BE
-#define MINIX_PART_TYPE 0x81
+#define MINIX_TYPE 0x81
 #define VALID_TABLE_LOC 510
 #define VALID_TABLE_SIG 0xAA55
 #define MINIX_MAGIC 0x4D5A
@@ -31,7 +31,7 @@ struct __attribute__ ((__packed__)) part_entry {
     uint32_t size;
 };
 
-struct __attribute__ ((__packed__)) super_block {
+struct __attribute__ ((__packed__)) superblock {
     uint32_t ninodes;
     uint16_t pad1;
     int16_t i_blocks;
@@ -61,3 +61,10 @@ struct __attribute__ ((__packed__)) inode {
     uint32_t two_indirect;
     uint32_t unused;
 };
+
+struct __attribute__ ((__packed__)) dir_entry {
+    uint32_t inode;
+    unsigned char name[60];
+}
+
+

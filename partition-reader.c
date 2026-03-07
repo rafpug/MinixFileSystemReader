@@ -27,7 +27,7 @@ void read_partition_table(FILE *fp, long base,
         exit(1);
     }
     
-    ret = fread(table, sizeof(struct part_entry), MAX_PARTS, fp);
+    ret = fread(&table, sizeof(struct part_entry), MAX_PARTS, fp);
     if (ret != MAX_PARTS) {
         perror("Failed partition table read");
         exit(1);
@@ -49,7 +49,7 @@ void read_superblock(FILE *fp, long base, struct superblock sb) {
         exit(1);
     }
     
-    nread = fread(sb, sizeof(struct superblock), 1, fp);
+    nread = fread(&sb, sizeof(struct superblock), 1, fp);
     if (nread != 1) {
         perror("Failed superblock read");
         exit(1);
@@ -61,5 +61,32 @@ void read_superblock(FILE *fp, long base, struct superblock sb) {
     }
 }
 
+void read_inode(FILE *fp, long base, uint32_t index, struct superblock sb,
+                struct inode i) {
+    long table-offset;
+    long inode-offset;
+    int ret;
+    size_t nread;
 
+    if (sb.ninodes < index) {
+        perror("inode out of index");
+        exit(1);
+    }
+    
+    table-offset = (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
+    inode-offset = table-offset + (sizeof(struct inode) * (index - 1));
 
+    ret = fseek(fp, base + inode-offset, SEEK_SET);
+    if (ret) {
+        perror("Failed inode seek");
+        exit(1);
+    }
+
+    nread = fread(&i, sizeof(struct inode), 1, fp);
+    if (nread != 1) {
+        perror("Failed inode read");
+        exit(1);
+    }
+}
+
+void read_dir( 
