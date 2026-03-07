@@ -6,20 +6,19 @@
 #include <stdio.h>
 
 #define SECTORE_SIZE 512
-
 #define DIRECT_ZONES 7
+#define MAX_PARTS 4
 
 #define PART_TABLE_LOC 0x1BE
 #define MINIX_PART_TYPE 0x81
-#define VALID_BOOT_510 0x55
-#define VALID_BOOT_511 0xAA
+#define VALID_TABLE_LOC 510
+#define VALID_TABLE_SIG 0xAA55
 #define MINIX_MAGIC 0x4D5A
-#define MINIX_MAGIC_REVERSE 0x5A4D
 #define INODE_SIZE 64
 #define DIR_ENTRY_SIZE 64
 #define SUP_BLOCK_OFFSET 1024
 
-struct __attribute__ ((__packed__)) part_table {
+struct __attribute__ ((__packed__)) part_entry {
     uint8_t bootind;
     uint8_t start_head;
     uint8_t start_sec;
