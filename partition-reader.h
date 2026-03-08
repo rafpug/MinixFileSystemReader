@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define SECTORE_SIZE 512
+#define SECTOR_SIZE 512
 #define DIRECT_ZONES 7
 #define MAX_PARTS 4
 

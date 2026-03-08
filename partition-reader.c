@@ -89,4 +89,140 @@ void read_inode(FILE *fp, long base, uint32_t index, struct superblock sb,
     }
 }
 
-void read_dir( 
+size_t read_dir_zones(FILE *p, long base, uint32_t *zones, size_t nzones, 
+                        size_t zone_size, struct dir_entry* table, 
+                        uint32_t *remaining) {
+    int ret;
+    size_t nread;
+    size_t entries;
+    size_t cnt = 0;
+    int cur_zone = 0;
+
+    while (remaining >= DIR_ENTRY_SIZE && cur_zone < nzones) {
+        if (zones[cur_zone] == 0) {
+            if (*remaining < zone_size) {
+                *remaining = 0;
+                break;
+            }
+            cur_zone++;
+            *remaining -= zone_size;
+            continue;
+        }
+
+        ret = fseek(fp, base + zones[cur_zone] * zone_size, SEEK_SET);
+        if (ret) {
+            perror("Failed zone seek");
+            exit(1);
+        }
+
+        if (remaining < zone_size) {
+            entries = *remaining / DIR_ENTRY_SIZE;
+            nread = fread(&table[cnt], DIR_ENTRY_SIZE, entries, fp);
+            if (nread != entries) {
+                perror("Failed partial zone read");
+                exit(1);
+            }
+
+            cnt += entries;
+            cur_zone++;
+            *remaining = 0;
+            break;
+        }
+        else {
+            entries = zone_size / DIR_ENTRY_SIZE;
+            nread = fread(&table[cnt], DIR_ENTRY_SIZE, entries, fp);
+            if (nread != entries) {
+                perror("Failed full zone read");
+                exit(1);
+            }
+            cnt += entries;
+            cur_zone++;
+            *remaining -= zone_size;
+        }
+    }
+    return cnt;
+}
+    
+size_t read_dir_indirects(FILE *fp, long base, uint32_t *indirects,
+                            size_t zone_size, struct dir_entry *table,
+                            uint32_t *remaining, size_t nindirect) {
+    int ret;
+    size_t nread;
+    size_t cnt = 0;
+    size_t cur = 0;
+    size_t nzones = zone_size / sizeof(uint32_t);
+    uint32_t zones[nzones];
+    
+    while (*remaining < DIR_ENTRY_SIZE && cur < nindirect) {
+        if (indirects[cur] == 0) {
+            if (*remaining < (nzones * zone_size)) {
+                *remaining = 0;
+                break;
+            }
+            cur++;
+            *remaining -= nzones * zone_size
+        }
+
+        ret = fseek(fp, base + indirects[cur] * zone_size, SEEK_SET);
+        if (ret) {
+            perror("Failed indirect seek");
+            exit(1);
+        }
+
+        nread = fread(zones, sizeof(uint32_t), nzones, fp);
+        if (nread != nzones) {
+            perror("Failed indirect read");
+            exit(1);
+        }
+
+        cnt += read_dir_zones(fp, base, zones, nzones, zone_size, &table[cnt],
+                                remaining);
+        cur++;
+    }
+    return cnt;
+}
+
+size_t read_dir(FILE *fp, long base, struct inode i, size_t zone_size, 
+                struct dir_entry *table) { 
+    int ret;
+    size_t nread;
+    size_t nindirect = zone_size / sizeof(uint32_t);
+    uint32_t indirects[nindirect];
+    size_t cnt = 0;
+    uint32_t remaining = i.size;
+
+    cnt += read_dir_zones(fp, base, i.zone, DIRECT_ZONES, zone_size, 
+                            table, &remaining);
+
+    if (remaining >= DIR_ENTRY_SIZE) {
+        cnt += read_dir_indirects(fp, base, &i.indirect, zone_size, &table[cnt],
+                                    &remaining, 1);
+    }
+    if (remaining >= DIR_ENTRY_SIZE) {
+        if (i.two_indirect == 0) {
+            perror("Exceeded readable filesize");
+            exit(1);
+        }
+
+        ret = fseek(fp, base + i.two_indirect * zone_size, SEEK_SET);
+        if (ret) {
+            perror("Failed two-indirect seek");
+            exit(1);
+        }
+
+        nread = fread(indirects, sizeof(uint32_t), nindirect, fp);
+        if (nread != nindirect) {
+            perror("Failed two-indirect read");
+            exit(1);
+        }
+
+        cnt += read_dir_indirects(fp, base, indirects, zone_size, &table[cnt],
+                                    &remaining, nindirect);
+        
+        if (remaining >= DIR_ENTRY_SIZE) {
+            perror("Exceeded readable filesize");
+            exit(1);
+        }
+    }
+    return cnt;
+}
