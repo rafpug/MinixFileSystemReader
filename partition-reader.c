@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "partition-reader.h"
 
 void read_partition_table(FILE *fp, long base, 
@@ -61,12 +62,13 @@ void read_superblock(FILE *fp, long base, struct superblock sb) {
     }
 }
 
-void read_inode(FILE *fp, long base, uint32_t index, struct superblock sb,
-                struct inode i) {
+struct inode read_inode(FILE *fp, long base, uint32_t index, 
+                            struct superblock sb) {
     long table-offset;
     long inode-offset;
     int ret;
     size_t nread;
+    struct inode i;
 
     if (sb.ninodes < index) {
         perror("inode out of index");
@@ -87,6 +89,8 @@ void read_inode(FILE *fp, long base, uint32_t index, struct superblock sb,
         perror("Failed inode read");
         exit(1);
     }
+
+    return i;
 }
 
 size_t read_dir_zones(FILE *p, long base, uint32_t *zones, size_t nzones, 
@@ -195,8 +199,8 @@ size_t read_dir(FILE *fp, long base, struct inode i, size_t zone_size,
                             table, &remaining);
 
     if (remaining >= DIR_ENTRY_SIZE) {
-        cnt += read_dir_indirects(fp, base, &i.indirect, zone_size, &table[cnt],
-                                    &remaining, 1);
+        cnt += read_dir_indirects(fp, base, &i.indirect, zone_size, 
+                                    &table[cnt], &remaining, 1);
     }
     if (remaining >= DIR_ENTRY_SIZE) {
         if (i.two_indirect == 0) {
@@ -225,4 +229,49 @@ size_t read_dir(FILE *fp, long base, struct inode i, size_t zone_size,
         }
     }
     return cnt;
+}
+
+struct inode navigate_fs(FILE *fp, long base, struct superblock sb
+                    char *path) {
+    char *saveptr;
+    int i;
+    struct inode cur_inode;
+    size_t n_entries;
+    uint32_t cur_idx = 1;
+    char *target = strtok_r(path, "/", &saveptr);
+
+    while(target != NULL) {
+        int found = !FOUND;
+        cur_inode = read_inode(fp, base, cur_idx, sb);
+        
+        if (cur_inode.mode & TYPE_MASK != DIR_MASK) {
+            perror("Not a Directory");
+            exit(1);
+        }
+
+        struct dir_entry table[i.size / DIR_ENTRY_SIZE];
+
+        n_entries = read_dir(fp, base, cur_inode, 
+                                sb.blocksize << sb.log_zone_size,
+                                table);
+
+        for (i=0; i < n_entries; i++) {
+            struct dir_entry cur_entry = table[i];
+            
+            if (strncmp(table[i].name, target, MAX_NAME) == 0) {
+                cur_idx = table[i].inode;
+                found = FOUND;
+                break;
+            }
+        }
+        
+        if (!found) {
+            perror("Directory not found");
+            exit(1);
+        }
+
+        target = str_tok_r(NULL, "/", &saveptr);
+    }
+
+    return read_inode(fp, base, cur_idx, sb);
 }

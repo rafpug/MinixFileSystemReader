@@ -8,6 +8,7 @@
 #define SECTOR_SIZE 512
 #define DIRECT_ZONES 7
 #define MAX_PARTS 4
+#define MAX_NAME 60
 
 #define PART_TABLE_LOC 0x1BE
 #define MINIX_TYPE 0x81
@@ -17,6 +18,24 @@
 #define INODE_SIZE 64
 #define DIR_ENTRY_SIZE 64
 #define SUP_BLOCK_OFFSET 1024
+
+#define TYPE_MASK 0170000
+#define REG_MASK 0100000
+#define DIR_MASK 0000400
+#define OWNER_R_PERM 0000400
+#define OWNER_W_PERM 0000200
+#define OWNER_X_PERM 0000100
+#define GROUP_R_PERM 0000040
+#define GROUP_W_PERM 0000020
+#define GROUP_X_PERM 0000010
+#define OTHER_R_PERM 0000004
+#define OTHER_W_PERM 0000002
+#define OTHER_X_PERM 0000001
+
+#define FOUND 1
+#define VERBOSE 1
+#define INVALID_PART -1
+#define INVALID_SUB -1
 
 struct __attribute__ ((__packed__)) part_entry {
     uint8_t bootind;
@@ -64,7 +83,7 @@ struct __attribute__ ((__packed__)) inode {
 
 struct __attribute__ ((__packed__)) dir_entry {
     uint32_t inode;
-    unsigned char name[60];
+    unsigned char name[MAX_NAME];
 }
 
 
