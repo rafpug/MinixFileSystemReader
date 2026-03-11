@@ -15,7 +15,7 @@
 #define PERM_PRINT_SIZE 11
 #define SB_PRINT_ALIGN 20
 #define LS_PRINT_ALIGN 9
-#define INODE_PRINT_ALIGN 30
+#define INODE_PRINT_ALIGN 22
 #define ZONE_PRINT_ALIGN 10
 
 #define PART_TABLE_LOC 0x1BE
@@ -119,3 +119,5 @@ struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
                                 char *path);
 
 long my_strtol(char *str);
+
+void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]);

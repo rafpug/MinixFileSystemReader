@@ -3,6 +3,43 @@
 #include <errno.h>
 #include "partition-reader.h"
 
+void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]) {
+    perms[PERM_PRINT_SIZE - 1] = '\0';
+
+    uint16_t type = mode & TYPE_MASK;
+    if (type == REG_MASK) {
+        perms[0] = 'r';
+    }
+    else if (type == DIR_MASK) {
+        perms[0] = 'd';
+    }
+    else {
+        perms[0] = '-';
+    }
+    
+    perms[1] = (mode & OWNER_R_PERM) ? 'r' : '-';
+    perms[2] = (mode & OWNER_W_PERM) ? 'w' : '-';
+    perms[3] = (mode & OWNER_X_PERM) ? 'x' : '-';
+    perms[4] = (mode & GROUP_R_PERM) ? 'r' : '-';
+    perms[5] = (mode & GROUP_W_PERM) ? 'w' : '-';
+    perms[6] = (mode & GROUP_X_PERM) ? 'x' : '-';
+    perms[7] = (mode & OTHER_R_PERM) ? 'r' : '-';
+    perms[8] = (mode & OTHER_W_PERM) ? 'w' : '-';
+    perms[9] = (mode & OTHER_X_PERM) ? 'x' : '-'; 
+}
+
+void print_inode(struct inode i) {
+    char perms[PERM_PRINT_SIZE];
+    stringify_perms(i.mode, perms);
+
+    fprintf(stderr, "\nFile inode:\n");
+    fprintf(stderr, "  uint16_t %-*s %*u (%s)\n", strlen("mode"), "mode",
+                SB_PRINT_ALIGN - strlen("mode "), i.mode, perms);
+    fprintf(stderr, "  uint16_t %-*s %*u\n", strlen("links"), "links",
+                SB_PRINT_ALIGN - strlen("links "), i.links);
+    fprintf(stderr, "  uint16_t"
+    
+
 void print_sb(struct superblock sb) {
     fprintf(stderr, "\nSuperblock Content\n");
     fprintf(stderr, "Stored Fields:\n");

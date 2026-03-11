@@ -6,29 +6,8 @@
 
 void print_ls(struct inode i, char *name) {
     char perms[PERM_PRINT_SIZE];
-    perms[PERM_PRINT_SIZE - 1] = '\0';
-    
-    uint16_t type = i.mode & TYPE_MASK;
-    if (type == REG_MASK) {
-        perms[0] = 'r';
-    }
-    else if (type == DIR_MASK) {
-        perms[0] = 'd';
-    }
-    else {
-        perms[0] = '-';
-    }
-
-    perms[1] = (i.mode & OWNER_R_PERM) ? 'r' : '-';
-    perms[2] = (i.mode & OWNER_W_PERM) ? 'w' : '-';
-    perms[3] = (i.mode & OWNER_X_PERM) ? 'x' : '-';
-    perms[4] = (i.mode & GROUP_R_PERM) ? 'r' : '-';
-    perms[5] = (i.mode & GROUP_W_PERM) ? 'w' : '-';
-    perms[6] = (i.mode & GROUP_X_PERM) ? 'x' : '-';
-    perms[7] = (i.mode & OTHER_R_PERM) ? 'r' : '-';
-    perms[8] = (i.mode & OTHER_W_PERM) ? 'w' : '-';
-    perms[9] = (i.mode & OTHER_X_PERM) ? 'x' : '-';
-    
+    stringify_perms(i.mode, perms);
+ 
     printf("%s %9u %s\n", perms, i.size, name);
 }
 
