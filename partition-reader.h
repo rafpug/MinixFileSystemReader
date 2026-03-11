@@ -16,7 +16,8 @@
 #define SB_PRINT_ALIGN 20
 #define LS_PRINT_ALIGN 9
 #define INODE_PRINT_ALIGN 22
-#define ZONE_PRINT_ALIGN 10
+#define ZONE_PRINT_ALIGN 24
+#define ZONE_PRINT_PADDING 14
 
 #define PART_TABLE_LOC 0x1BE
 #define MINIX_TYPE 0x81
@@ -121,3 +122,7 @@ struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
 long my_strtol(char *str);
 
 void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]);
+
+void print_sb(struct superblock sb);
+
+void print_inode(struct inode i);

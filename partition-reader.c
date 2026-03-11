@@ -28,17 +28,49 @@ void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]) {
     perms[9] = (mode & OTHER_X_PERM) ? 'x' : '-'; 
 }
 
+void print_zones(struct inode inode) {
+    int i;
+    int length = strlen("zone[_]    = "); 
+    for (i=0; i < DIRECT_ZONES; i++) {
+        
+        fprintf(stderr, "%*szone[%d]    = %*u\n", ZONE_PRINT_PADDING, " ",
+                   ZONE_PRINT_ALIGN - length, inode.zone[i]);
+    }
+} 
+
 void print_inode(struct inode i) {
     char perms[PERM_PRINT_SIZE];
     stringify_perms(i.mode, perms);
 
     fprintf(stderr, "\nFile inode:\n");
     fprintf(stderr, "  uint16_t %-*s %*u (%s)\n", strlen("mode"), "mode",
-                SB_PRINT_ALIGN - strlen("mode "), i.mode, perms);
+                INODE_PRINT_ALIGN - strlen("mode "), i.mode, perms);
     fprintf(stderr, "  uint16_t %-*s %*u\n", strlen("links"), "links",
-                SB_PRINT_ALIGN - strlen("links "), i.links);
-    fprintf(stderr, "  uint16_t"
-    
+                INODE_PRINT_ALIGN - strlen("links "), i.links);
+    fprintf(stderr, "  uint16_t %-*s %*u\n", strlen("uid"), "uid",
+                INODE_PRINT_ALIGN - strlen("uid "), i.uid);
+    fprintf(stderr, "  uint16_t %-*s %*u\n", strlen("gid"), "gid",
+                INODE_PRINT_ALIGN - strlen("gid "), i.gid);
+    fprintf(stderr, "  uint32_t %-*s %*u\n", strlen("size"), "size",
+                INODE_PRINT_ALIGN - strlen("size "), i.size);
+    fprintf(stderr, "  uint32_t %-*s %*u\n", strlen("atime"), "atime",
+                INODE_PRINT_ALIGN - strlen("atime "), i.atime);
+    fprintf(stderr, "  uint32_t %-*s %*u\n", strlen("mtime"), "mtime",
+                INODE_PRINT_ALIGN - strlen("mtime "), i.mtime);
+    fprintf(stderr, "  uint32_t %-*s %*u\n", strlen("ctime"), "ctime",
+                INODE_PRINT_ALIGN - strlen("ctime "), i.ctime);
+
+    fprintf(stderr, "\n  Direct zones:\n");
+
+    print_zones(i);
+
+    fprintf(stderr, "%-*s%-*s %*u\n", ZONE_PRINT_PADDING, "  uint32_t",
+                strlen("indirect"), "indirect", 
+                ZONE_PRINT_ALIGN - strlen("indirect "), i.indirect);
+    fprintf(stderr, "%-*s%-*s %*u\n", ZONE_PRINT_PADDING, "  uint32_t",
+                strlen("double"), "double",
+                ZONE_PRINT_ALIGNE - strlen("double "), i.two_indirect);
+}
 
 void print_sb(struct superblock sb) {
     fprintf(stderr, "\nSuperblock Content\n");
