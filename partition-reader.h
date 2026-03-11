@@ -9,7 +9,7 @@
 #define DIRECT_ZONES 7
 #define MAX_PARTS 4
 #define MAX_NAME 60
-#define PERM_PRINT_SIZE 11
+#define MAX_PATH_SIZE 1024
 
 #define PART_TABLE_LOC 0x1BE
 #define MINIX_TYPE 0x81

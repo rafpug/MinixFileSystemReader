@@ -29,8 +29,22 @@ void print_inode(struct inode i, char *name) {
     
     printf("%s $9u %s\n", perms, i.size, name);
 }
-        
-        
+
+void clean_path(char *old, char *new) {
+    char *saveptr;
+    int cur = 0;
+    char *target = strtok_r(path, "/", &saveptr);
+
+    while(target != NULL) {
+        new[cur++] = '/';
+        strncpy(new + cur, target, strlen(target));
+        target = str_tok_r(NULL, "/", &saveptr);
+    }
+
+    if (cur == 0) {
+        new[cur] = '/';
+    }
+}       
         
 
 int main(int argc, char **argv) {
@@ -95,12 +109,17 @@ int main(int argc, char **argv) {
 
     struct dir_entry dest_entry = navigate_fs(fp, base, sb, fs_path);
     struct inode dest = read_inode(fp, base, dest_entry.inode, sb);
-
+    
+    char cleaned_path[strlen(fs_path) + 1];
+    
+    clean_path(fs_path, cleaned_path);
+    
     if (dest.mode & TYPE_MASK == DIR_MASK) {
     
     }
     else if (dest.mode & TYPE_MASK == REG_MASK) {
-        print_in
+        print_inode(dest, cleaned_path);
+    }
 
     
     
