@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "partition-reader.h"
 
 void read_partition_table(FILE *fp, long base, 
@@ -40,9 +41,10 @@ void read_partition_table(FILE *fp, long base,
     }
 }
     
-void read_superblock(FILE *fp, long base, struct superblock sb) {
+struct superblock read_superblock(FILE *fp, long base) {
     int ret;
     size_t nread;
+    struct superblock sb;
 
     ret = fseek(fp, base + SUP_BLOCK_OFFSET, SEEK_SET);
     if (ret) {
@@ -60,6 +62,7 @@ void read_superblock(FILE *fp, long base, struct superblock sb) {
         perror("Not a MINIX filesystem");
         exit(1);
     }
+    return sb;
 }
 
 struct inode read_inode(FILE *fp, long base, uint32_t index, 
@@ -231,13 +234,14 @@ size_t read_dir(FILE *fp, long base, struct inode i, size_t zone_size,
     return cnt;
 }
 
-struct inode navigate_fs(FILE *fp, long base, struct superblock sb
+struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb
                     char *path) {
     char *saveptr;
     int i;
     struct inode cur_inode;
     size_t n_entries;
     uint32_t cur_idx = 1;
+    struct dir_entry cur_entry;
     char *target = strtok_r(path, "/", &saveptr);
 
     while(target != NULL) {
@@ -256,7 +260,7 @@ struct inode navigate_fs(FILE *fp, long base, struct superblock sb
                                 table);
 
         for (i=0; i < n_entries; i++) {
-            struct dir_entry cur_entry = table[i];
+            cur_entry = table[i];
             
             if (strncmp(table[i].name, target, MAX_NAME) == 0) {
                 cur_idx = table[i].inode;
@@ -273,5 +277,24 @@ struct inode navigate_fs(FILE *fp, long base, struct superblock sb
         target = str_tok_r(NULL, "/", &saveptr);
     }
 
-    return read_inode(fp, base, cur_idx, sb);
+    return cur_entry;
+}
+
+long my_strtol(char *str) {
+    char *end;
+    errno = 0;
+
+    long result = strtol(str, &end, 10);
+
+    if (errno != 0) {
+        perror("Failed strtol");
+        exit(1);
+    }
+
+    if (*end != '\0') {
+        perror("Invalid input, expected an integer");
+        exit(1);
+    }
+
+    return result;
 }
