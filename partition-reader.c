@@ -234,7 +234,7 @@ size_t read_dir(FILE *fp, long base, struct inode i, size_t zone_size,
     return cnt;
 }
 
-struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb
+struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
                     char *path) {
     char *saveptr;
     int i;

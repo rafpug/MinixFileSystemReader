@@ -1,16 +1,18 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include "partition-reader.h"
 
 void print_inode(struct inode i, char *name) {
     char perms[PERM_PRINT_SIZE];
     perms[PERM_PRINT_SIZE - 1] = '\0';
     
-    uint16_t type = i.mode & TYPE_MASK
+    uint16_t type = i.mode & TYPE_MASK;
     if (type == REG_MASK) {
         perms[0] = 'r';
     }
-    else if (type = DIR_MASK) {
+    else if (type == DIR_MASK) {
         perms[0] = 'd';
     }
     else {
@@ -27,18 +29,18 @@ void print_inode(struct inode i, char *name) {
     perms[8] = (i.mode & OTHER_W_PERM) ? 'w' : '-';
     perms[9] = (i.mode & OTHER_X_PERM) ? 'x' : '-';
     
-    printf("%s $9u %s\n", perms, i.size, name);
+    printf("%s %9u %s\n", perms, i.size, name);
 }
 
 void clean_path(char *old, char *new) {
     char *saveptr;
     int cur = 0;
-    char *target = strtok_r(path, "/", &saveptr);
+    char *target = strtok_r(old, "/", &saveptr);
 
     while(target != NULL) {
         new[cur++] = '/';
         strncpy(new + cur, target, strlen(target));
-        target = str_tok_r(NULL, "/", &saveptr);
+        target = strtok_r(NULL, "/", &saveptr);
     }
 
     if (cur == 0) {
@@ -48,7 +50,7 @@ void clean_path(char *old, char *new) {
         
 
 int main(int argc, char **argv) {
-    int verbose = !VERBOSE
+    int verbose = !VERBOSE;
     long part = INVALID_PART;
     long sub = INVALID_SUB;
     char *image_path;
@@ -97,11 +99,11 @@ int main(int argc, char **argv) {
     if(part != INVALID_PART) {
  
         read_partition_table(fp, base, table);
-        boot += table[part].lFirst * SECTOR_SIZE;
+        base += table[part].lFirst * SECTOR_SIZE;
         
         if(sub != INVALID_PART) {
             read_partition_table(fp, base, table);
-            boot += table[sub].lFirst * SECTOR_SIZE;
+            base += table[sub].lFirst * SECTOR_SIZE;
         }
     }
 
@@ -114,25 +116,25 @@ int main(int argc, char **argv) {
     cleaned_path[strlen(fs_path)] = '\0';
     clean_path(fs_path, cleaned_path);
     
-    if (dest.mode & TYPE_MASK == DIR_MASK) {
+    if ((dest.mode & TYPE_MASK) == DIR_MASK) {
         printf("%s:", cleaned_path);
         
         struct dir_entry entries[dest.size / DIR_ENTRY_SIZE];
         size_t n_entries = read_dir(fp, base, dest, 
                                         sb.blocksize << sb.log_zone_size, 
                                         entries);
-        int i;
+        size_t i;
         for (i = 0; i < n_entries; i++) {
             struct inode cur_inode = read_inode(fp, base, entries[i].inode, 
                                                     sb);
             char name[MAX_NAME + 1];
             name[MAX_NAME] = '\0';
-            strncpy(name, entries[i].name, MAX_NAME);
+            strncpy(name, (char *)entries[i].name, MAX_NAME);
             
             print_inode(cur_inode, name);
         }
     }
-    else if (dest.mode & TYPE_MASK == REG_MASK) {
+    else if ((dest.mode & TYPE_MASK) == REG_MASK) {
         print_inode(dest, cleaned_path);
     }
     return 0;

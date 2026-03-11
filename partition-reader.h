@@ -4,12 +4,15 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define SECTOR_SIZE 512
 #define DIRECT_ZONES 7
 #define MAX_PARTS 4
 #define MAX_NAME 60
 #define MAX_PATH_SIZE 1024
+#define PERM_PRINT_SIZE 11
 
 #define PART_TABLE_LOC 0x1BE
 #define MINIX_TYPE 0x81
@@ -85,6 +88,30 @@ struct __attribute__ ((__packed__)) inode {
 struct __attribute__ ((__packed__)) dir_entry {
     uint32_t inode;
     unsigned char name[MAX_NAME];
-}
+};
+
+void read_partition_table(FILE *fp, long base, 
+                            struct part_entry table[MAX_PARTS]);
+
+struct superblock read_superblock(FILE *fp, long base);
+
+struct inode read_inode(FILE *fp, long base, uint32_t index,
+                            struct superblock sb);
+
+size_t read_dir_zones(FILE *p, long base, uint32_t *zones, size_t nzones,
+                        size_t zone_size, struct dir_entry* table,
+                        uint32_t *remaining);
 
 
+size_t read_dir_indirects(FILE *fp, long base, uint32_t *indirects,
+                            size_t zone_size, struct dir_entry *table,
+                            uint32_t *remaining, size_t nindirect);
+
+
+size_t read_dir(FILE *fp, long base, struct inode i, size_t zone_size,
+                struct dir_entry *table);
+
+struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
+                                char *path);
+
+long my_strtol(char *str);
