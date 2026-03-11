@@ -111,15 +111,32 @@ int main(int argc, char **argv) {
     struct inode dest = read_inode(fp, base, dest_entry.inode, sb);
     
     char cleaned_path[strlen(fs_path) + 1];
-    
+    cleaned_path[strlen(fs_path)] = '\0';
     clean_path(fs_path, cleaned_path);
     
     if (dest.mode & TYPE_MASK == DIR_MASK) {
-    
+        printf("%s:", cleaned_path);
+        
+        struct dir_entry entries[dest.size / DIR_ENTRY_SIZE];
+        size_t n_entries = read_dir(fp, base, dest, 
+                                        sb.blocksize << sb.log_zone_size, 
+                                        entries);
+        int i;
+        for (i = 0; i < n_entries; i++) {
+            struct inode cur_inode = read_inode(fp, base, entries[i].inode, 
+                                                    sb);
+            char name[MAX_NAME + 1];
+            name[MAX_NAME] = '\0';
+            strncpy(name, entries[i].name, MAX_NAME);
+            
+            print_inode(cur_inode, name);
+        }
     }
     else if (dest.mode & TYPE_MASK == REG_MASK) {
         print_inode(dest, cleaned_path);
     }
+    return 0;
+}
 
     
     
