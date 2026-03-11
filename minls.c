@@ -116,6 +116,11 @@ int main(int argc, char **argv) {
     else if ((dest.mode & TYPE_MASK) == REG_MASK) {
         print_ls(dest, cleaned_path);
     }
+
+    if (verbose) {
+        print_sb(sb);
+        print_inode(dest);
+    }
     return 0;
 }
 

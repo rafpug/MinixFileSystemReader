@@ -30,7 +30,7 @@ void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]) {
 
 void print_zones(struct inode inode) {
     int i;
-    int length = strlen("zone[_]    = "); 
+    int length = (int) strlen("zone[_]    = "); 
     for (i=0; i < DIRECT_ZONES; i++) {
         
         fprintf(stderr, "%*szone[%d]    = %*u\n", ZONE_PRINT_PADDING, " ",
@@ -41,61 +41,85 @@ void print_zones(struct inode inode) {
 void print_inode(struct inode i) {
     char perms[PERM_PRINT_SIZE];
     stringify_perms(i.mode, perms);
+    int length;
 
     fprintf(stderr, "\nFile inode:\n");
-    fprintf(stderr, "  uint16_t %-*s %*u (%s)\n", strlen("mode"), "mode",
-                INODE_PRINT_ALIGN - strlen("mode "), i.mode, perms);
-    fprintf(stderr, "  uint16_t %-*s %*u\n", strlen("links"), "links",
-                INODE_PRINT_ALIGN - strlen("links "), i.links);
-    fprintf(stderr, "  uint16_t %-*s %*u\n", strlen("uid"), "uid",
-                INODE_PRINT_ALIGN - strlen("uid "), i.uid);
-    fprintf(stderr, "  uint16_t %-*s %*u\n", strlen("gid"), "gid",
-                INODE_PRINT_ALIGN - strlen("gid "), i.gid);
-    fprintf(stderr, "  uint32_t %-*s %*u\n", strlen("size"), "size",
-                INODE_PRINT_ALIGN - strlen("size "), i.size);
-    fprintf(stderr, "  uint32_t %-*s %*u\n", strlen("atime"), "atime",
-                INODE_PRINT_ALIGN - strlen("atime "), i.atime);
-    fprintf(stderr, "  uint32_t %-*s %*u\n", strlen("mtime"), "mtime",
-                INODE_PRINT_ALIGN - strlen("mtime "), i.mtime);
-    fprintf(stderr, "  uint32_t %-*s %*u\n", strlen("ctime"), "ctime",
-                INODE_PRINT_ALIGN - strlen("ctime "), i.ctime);
+    length = (int) strlen("mode");
+    fprintf(stderr, "  uint16_t %-*s %*u (%s)\n", length, "mode",
+                INODE_PRINT_ALIGN - length - 1, i.mode, perms);
+    length = (int) strlen("links");
+    fprintf(stderr, "  uint16_t %-*s %*u\n", length, "links",
+                INODE_PRINT_ALIGN - length - 1, i.links);
+    length = (int) strlen("uid");
+    fprintf(stderr, "  uint16_t %-*s %*u\n", length, "uid",
+                INODE_PRINT_ALIGN - length - 1, i.uid);
+    length = (int) strlen("gid");
+    fprintf(stderr, "  uint16_t %-*s %*u\n", length, "gid",
+                INODE_PRINT_ALIGN - length - 1, i.gid);
+    length = (int) strlen("size");
+    fprintf(stderr, "  uint32_t %-*s %*u\n", length, "size",
+                INODE_PRINT_ALIGN - length - 1, i.size);
+    length = (int) strlen("atime");
+    fprintf(stderr, "  uint32_t %-*s %*u\n", length, "atime",
+                INODE_PRINT_ALIGN - length - 1, i.atime);
+    length = (int) strlen("mtime");
+    fprintf(stderr, "  uint32_t %-*s %*u\n", length, "mtime",
+                INODE_PRINT_ALIGN - length - 1, i.mtime);
+    length = (int) strlen("ctime");
+    fprintf(stderr, "  uint32_t %-*s %*u\n", length, "ctime",
+                INODE_PRINT_ALIGN - length - 1, i.ctime);
 
     fprintf(stderr, "\n  Direct zones:\n");
 
     print_zones(i);
-
+    
+    length = (int) strlen("indirect");
     fprintf(stderr, "%-*s%-*s %*u\n", ZONE_PRINT_PADDING, "  uint32_t",
-                strlen("indirect"), "indirect", 
-                ZONE_PRINT_ALIGN - strlen("indirect "), i.indirect);
+                length, "indirect", 
+                ZONE_PRINT_ALIGN - length - 1, i.indirect);
+    length = (int) strlen("double");
     fprintf(stderr, "%-*s%-*s %*u\n", ZONE_PRINT_PADDING, "  uint32_t",
-                strlen("double"), "double",
-                ZONE_PRINT_ALIGNE - strlen("double "), i.two_indirect);
+                length, "double",
+                ZONE_PRINT_ALIGNE - length - 1, i.two_indirect);
 }
 
 void print_sb(struct superblock sb) {
+    int length;
+
     fprintf(stderr, "\nSuperblock Content\n");
     fprintf(stderr, "Stored Fields:\n");
-    fprintf(stderr, "  %-*s %*u\n", strlen("ninodes"), "ninodes", 
-                SB_PRINT_ALIGN - strlen("ninodes "), sb.ninodes);
-    fprintf(stderr, "  %-*s %*d\n", strlen("i_blocks"), "i_blocks",
-                SB_PRINT_ALIGN - strlen("i_blocks "), sb.i_blocks);
-    fprintf(stderr, "  %-*s %*d\n", strlen("z_blocks"), "z_blocks",
-                SB_PRINT_ALIGN - strlen("z_blocks "), sb.z_blocks);
-    fprintf(stderr, "  %-*s %*d\n", strlen("firstdata"), "firstdata",
-                SB_PRINT_ALIGN - strlen("firstdata "), sb.firstdata);
-    fprintf(stderr, "  %-*s %*d (zone size: %d)\n", strlen("log_zone_size"),
-                "log_zone_size", SB_PRINT_ALIGN - strlen("log_zone_size "), 
+    
+    length = (int) strlen("ninodes");
+    fprintf(stderr, "  %-*s %*u\n", length, "ninodes", 
+                SB_PRINT_ALIGN - length - 1, sb.ninodes);
+    length = (int) strlen("i_blocks");
+    fprintf(stderr, "  %-*s %*d\n", length, "i_blocks",
+                SB_PRINT_ALIGN - length - 1, sb.i_blocks);
+    length = (int) strlen("z_blocks");
+    fprintf(stderr, "  %-*s %*d\n", length, "z_blocks",
+                SB_PRINT_ALIGN - length - 1, sb.z_blocks);
+    length = (int) strlen("firstdata");
+    fprintf(stderr, "  %-*s %*d\n", length, "firstdata",
+                SB_PRINT_ALIGN - length - 1, sb.firstdata);
+    length = (int) strlen("log_zone_size");
+    fprintf(stderr, "  %-*s %*d (zone size: %d)\n", length,
+                "log_zone_size", SB_PRINT_ALIGN - length - 1, 
                 sb.log_zone_size, sb.blocksize << sb.log_zone_size);
-    fprintf(stderr, "  %-*s %*d\n", strlen("max_file"), "max_file",
-                SB_PRINT_ALIGN - strlen("max_file "), sb.max_file);
-    fprintf(stderr, "  %-*s %*d\n", strlen("magic"), "magic",
-                SB_PRINT_ALIGN - strlen("magic "), sb.magic);
-    fprintf(stderr, "  %-*s %*u\n", strlen("zones"), "zones",
-                SB_PRINT_ALIGN - strlen("zones "), sb.zones);
-    fprintf(stderr, "  %-*s %*u\n", strlen("blocksize"), "blocksize",
-                SB_PRINT_ALIGN - strlen("blocksize "), sb.blocksize);
-    fprintf(stderr, "  %-*s %*u\n", strlen("subversion"), "subversion",
-                SB_PRINT_ALIGN - strlen("subversion "), sb.subversion)
+    length = (int) strlen("max_file");
+    fprintf(stderr, "  %-*s %*d\n", length, "max_file",
+                SB_PRINT_ALIGN - length - 1, sb.max_file);
+    length = (int) strlen("magic");
+    fprintf(stderr, "  %-*s %*d\n", length, "magic",
+                SB_PRINT_ALIGN - length - 1, sb.magic);
+    length = (int) strlen("zones");
+    fprintf(stderr, "  %-*s %*u\n", length, "zones",
+                SB_PRINT_ALIGN - length - 1, sb.zones);
+    length = (int) strlen("blocksize");
+    fprintf(stderr, "  %-*s %*u\n", length, "blocksize",
+                SB_PRINT_ALIGN - length - 1, sb.blocksize);
+    length = (int) strlen("subversion");
+    fprintf(stderr, "  %-*s %*u\n", length, "subversion",
+                SB_PRINT_ALIGN - length - 1, sb.subversion)
 }
 
 void read_partition_table(FILE *fp, long base, 
