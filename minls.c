@@ -4,7 +4,7 @@
 #include <string.h>
 #include "partition-reader.h"
 
-void print_inode(struct inode i, char *name) {
+void print_ls(struct inode i, char *name) {
     char perms[PERM_PRINT_SIZE];
     perms[PERM_PRINT_SIZE - 1] = '\0';
     
@@ -131,11 +131,11 @@ int main(int argc, char **argv) {
             name[MAX_NAME] = '\0';
             strncpy(name, (char *)entries[i].name, MAX_NAME);
             
-            print_inode(cur_inode, name);
+            print_ls(cur_inode, name);
         }
     }
     else if ((dest.mode & TYPE_MASK) == REG_MASK) {
-        print_inode(dest, cleaned_path);
+        print_ls(dest, cleaned_path);
     }
     return 0;
 }

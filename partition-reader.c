@@ -3,6 +3,32 @@
 #include <errno.h>
 #include "partition-reader.h"
 
+void print_sb(struct superblock sb) {
+    fprintf(stderr, "\nSuperblock Content\n");
+    fprintf(stderr, "Stored Fields:\n");
+    fprintf(stderr, "  %-*s %*u\n", strlen("ninodes"), "ninodes", 
+                SB_PRINT_ALIGN - strlen("ninodes "), sb.ninodes);
+    fprintf(stderr, "  %-*s %*d\n", strlen("i_blocks"), "i_blocks",
+                SB_PRINT_ALIGN - strlen("i_blocks "), sb.i_blocks);
+    fprintf(stderr, "  %-*s %*d\n", strlen("z_blocks"), "z_blocks",
+                SB_PRINT_ALIGN - strlen("z_blocks "), sb.z_blocks);
+    fprintf(stderr, "  %-*s %*d\n", strlen("firstdata"), "firstdata",
+                SB_PRINT_ALIGN - strlen("firstdata "), sb.firstdata);
+    fprintf(stderr, "  %-*s %*d (zone size: %d)\n", strlen("log_zone_size"),
+                "log_zone_size", SB_PRINT_ALIGN - strlen("log_zone_size "), 
+                sb.log_zone_size, sb.blocksize << sb.log_zone_size);
+    fprintf(stderr, "  %-*s %*d\n", strlen("max_file"), "max_file",
+                SB_PRINT_ALIGN - strlen("max_file "), sb.max_file);
+    fprintf(stderr, "  %-*s %*d\n", strlen("magic"), "magic",
+                SB_PRINT_ALIGN - strlen("magic "), sb.magic);
+    fprintf(stderr, "  %-*s %*u\n", strlen("zones"), "zones",
+                SB_PRINT_ALIGN - strlen("zones "), sb.zones);
+    fprintf(stderr, "  %-*s %*u\n", strlen("blocksize"), "blocksize",
+                SB_PRINT_ALIGN - strlen("blocksize "), sb.blocksize);
+    fprintf(stderr, "  %-*s %*u\n", strlen("subversion"), "subversion",
+                SB_PRINT_ALIGN - strlen("subversion "), sb.subversion)
+}
+
 void read_partition_table(FILE *fp, long base, 
                             struct part_entry table[MAX_PARTS]) {
     uint16_t signature;
