@@ -3,6 +3,8 @@
 #include <string.h>
 #include "partition-reader.h"
 
+size_t 
+
 int main(int argc, char **argv) {
     int verbose = !VERBOSE;
     long part = INVALID_PART;
