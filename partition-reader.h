@@ -126,3 +126,5 @@ void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]);
 void print_sb(struct superblock sb);
 
 void print_inode(struct inode i);
+
+long get_base(FILE *fp, long part, long sub, int verbose);

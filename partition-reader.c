@@ -444,3 +444,33 @@ long my_strtol(char *str) {
 
     return result;
 }
+
+long get_base(FILE *fp, long part, long sub, int verbose) {
+    struct part_entry table[MAX_PARTS];
+    long base = 0;
+
+    if (part != INVALID_PART) {
+        read_partition_table(fp, base, table);
+        
+        if (table[part].type != MINIX_TYPE) {
+            perror("Not a MINIX partition");
+            exit(1);
+        }
+
+        base = table[part].lFirst * SECTOR_SIZE;
+    
+        if(sub != INVALID_PART) {
+            read_partition_table(fp, base, table);
+            
+            if (table[sub].type != MINIX_TYPE) {
+                perror("Not a MINIX subpartition");
+                exit(1);
+            }
+
+            base = table[sub].lFirst * SECTOR_SIZE;
+        }
+    
+    }
+    return base;
+}
+        

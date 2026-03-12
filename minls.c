@@ -36,7 +36,6 @@ int main(int argc, char **argv) {
     char *image_path;
     char *fs_path;
     int opt;
-    struct part_entry table[MAX_PARTS];
     struct superblock sb;
     long base = 0;
 
@@ -84,28 +83,7 @@ int main(int argc, char **argv) {
         exit(1);
     }   
     
-    if (part != INVALID_PART) {
- 
-        read_partition_table(fp, base, table);
-        
-        if (table[part].type != MINIX_TYPE) {
-            perror("Not a MINIX partition");
-            exit(1);
-        }
-        
-        base = table[part].lFirst * SECTOR_SIZE;
-        
-        if(sub != INVALID_PART) {
-            read_partition_table(fp, base, table);
-
-            if (table[sub].type != MINIX_TYPE) {
-                perror("Not a MINIX subpartition");
-                exit(1);
-            }
-            
-            base = table[sub].lFirst * SECTOR_SIZE;
-        }
-    }
+    base = get_base(fp, part, sub, verbose);
 
     sb = read_superblock(fp, base);
 
