@@ -138,6 +138,9 @@ int main(int argc, char **argv) {
                                         entries);
         size_t i;
         for (i = 0; i < n_entries; i++) {
+            if (entries[i].inode == 0) {
+                continue;
+            }
             struct inode cur_inode = read_inode(fp, base, entries[i].inode, 
                                                     sb);
             char name[MAX_NAME + 1];

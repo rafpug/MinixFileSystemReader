@@ -394,7 +394,8 @@ struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
         for (i=0; i < n_entries; i++) {
             cur_entry = table[i];
             
-            if (strncmp((char *) table[i].name, target, MAX_NAME) == 0) {
+            if (strncmp((char *) table[i].name, target, MAX_NAME) == 0
+                    && table[i].inode != 0) {
                 cur_idx = table[i].inode;
                 found = FOUND;
                 break;
