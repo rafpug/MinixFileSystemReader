@@ -110,11 +110,12 @@ size_t read_dir_zones(FILE *p, long base, uint32_t *zones, size_t nzones,
 
 size_t read_dir_indirects(FILE *fp, long base, uint32_t *indirects,
                             size_t zone_size, struct dir_entry *table,
-                            uint32_t *remaining, size_t nindirect);
+                            uint32_t *remaining, size_t nindirect, 
+                            uint16_t blocksize);
 
 
 size_t read_dir(FILE *fp, long base, struct inode i, size_t zone_size,
-                struct dir_entry *table);
+                struct dir_entry *table, uint16_t blocksize);
 
 struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
                                 char *path);

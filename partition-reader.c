@@ -5,6 +5,14 @@
 #include <time.h>
 #include "partition-reader.h"
 
+/* partition-reader.c is meant to serve as the abstraction of minget and 
+ * minls for their shared behaviours
+ *
+ * The core of what this file implements is the ability to print out 
+ * structures, read directory files, read inodes, read superblocks, and read 
+ * partitions */
+
+
 /* Modifies the given string to be the perms representing the given mode */
 void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]) {
     perms[PERM_PRINT_SIZE - 1] = '\0';

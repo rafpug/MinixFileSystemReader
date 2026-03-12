@@ -4,6 +4,13 @@
 #include <string.h>
 #include "partition-reader.h"
 
+/* minls.c serves as the source file for the minls command
+ *
+ * minls lists a file or directory on the given filesystem image
+ * The optional path determines what is listed
+ * If no path is given, then root is  */
+
+/* Prints out the ls of the corresponding directory entry */
 void print_ls(struct inode i, char *name) {
     char perms[PERM_PRINT_SIZE];
     stringify_perms(i.mode, perms);
@@ -11,12 +18,15 @@ void print_ls(struct inode i, char *name) {
     printf("%s %9u %s\n", perms, i.size, name);
 }
 
+/* Cleans up the path into a standard format 
+ * Caller guarantees the new string is 2 chars longer than old*/
 void clean_path(char *old, char *new) {
     char *saveptr;
     int cur = 0;
     char *target = strtok_r(old, "/", &saveptr);
 
     while(target != NULL) {
+        /* Ensures every path starts with '/' and no duplicate '/' */
         new[cur++] = '/';
         strncpy(new + cur, target, strlen(target));
         cur += strlen(target);
@@ -28,7 +38,6 @@ void clean_path(char *old, char *new) {
     }
 }       
         
-
 int main(int argc, char **argv) {
     int verbose = !VERBOSE;
     long part = INVALID_PART;
@@ -83,13 +92,19 @@ int main(int argc, char **argv) {
         exit(1);
     }   
     
+    /* First gets the base of the file system */
     base = get_base(fp, part, sub, verbose);
 
+    /* Then reads the superblock with that base */
     sb = read_superblock(fp, base);
 
+    /* Next we can navigate the file system with sb and the path */
     struct dir_entry dest_entry = navigate_fs(fp, base, sb, fs_path);
+
+    /* Get the metadata for file at the end of the path */
     struct inode dest = read_inode(fp, base, dest_entry.inode, sb);
     
+    /* Cleans up the path for printouts */
     char cleaned_path[strlen(fs_path) + 2];
     cleaned_path[strlen(fs_path)] = '\0';
 
@@ -108,6 +123,8 @@ int main(int argc, char **argv) {
     }
  
     if ((dest.mode & TYPE_MASK) == DIR_MASK) {
+        /* If the file at the end of the path is a directory, then we print
+         * the ls of all the files under it */
         printf("%s:\n", cleaned_path);
         
         struct dir_entry entries[dest.size / DIR_ENTRY_SIZE];
@@ -129,6 +146,7 @@ int main(int argc, char **argv) {
         }
     }
     else if ((dest.mode & TYPE_MASK) == REG_MASK) {
+        /* If its just a regular file then we just print the ls of it alone */
         print_ls(dest, cleaned_path);
     }
 
