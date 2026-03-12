@@ -19,6 +19,7 @@ void clean_path(char *old, char *new) {
     while(target != NULL) {
         new[cur++] = '/';
         strncpy(new + cur, target, strlen(target));
+        cur += strlen(target);
         target = strtok_r(NULL, "/", &saveptr);
     }
 
@@ -78,7 +79,12 @@ int main(int argc, char **argv) {
     
     FILE *fp = fopen(image_path, "rb");
     
-    if(part != INVALID_PART) {
+    if (!fp) {
+        perror("Failed to open image");
+        exit(1);
+    }   
+    
+    if (part != INVALID_PART) {
  
         read_partition_table(fp, base, table);
         
@@ -106,7 +112,7 @@ int main(int argc, char **argv) {
     struct dir_entry dest_entry = navigate_fs(fp, base, sb, fs_path);
     struct inode dest = read_inode(fp, base, dest_entry.inode, sb);
     
-    char cleaned_path[strlen(fs_path) + 1];
+    char cleaned_path[strlen(fs_path) + 2];
     cleaned_path[strlen(fs_path)] = '\0';
 
     char *fs_path_copy = strdup(fs_path);

@@ -9,13 +9,13 @@ void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]) {
 
     uint16_t type = mode & TYPE_MASK;
     if (type == REG_MASK) {
-        perms[0] = 'r';
+        perms[0] = '-';
     }
     else if (type == DIR_MASK) {
         perms[0] = 'd';
     }
     else {
-        perms[0] = '-';
+        perms[0] = '?';
     }
     
     perms[1] = (mode & OWNER_R_PERM) ? 'r' : '-';
@@ -46,7 +46,7 @@ void print_inode(struct inode i) {
 
     fprintf(stderr, "\nFile inode:\n");
     length = (int) strlen("mode");
-    fprintf(stderr, "  uint16_t %-*s %*u (%s)\n", length, "mode",
+    fprintf(stderr, "  uint16_t %-*s %#*x (%s)\n", length, "mode",
                 INODE_PRINT_ALIGN - length - 1, i.mode, perms);
     length = (int) strlen("links");
     fprintf(stderr, "  uint16_t %-*s %*u\n", length, "links",
@@ -107,10 +107,10 @@ void print_sb(struct superblock sb) {
                 "log_zone_size", SB_PRINT_ALIGN - length - 1, 
                 sb.log_zone_size, sb.blocksize << sb.log_zone_size);
     length = (int) strlen("max_file");
-    fprintf(stderr, "  %-*s %*d\n", length, "max_file",
+    fprintf(stderr, "  %-*s %*u\n", length, "max_file",
                 SB_PRINT_ALIGN - length - 1, sb.max_file);
     length = (int) strlen("magic");
-    fprintf(stderr, "  %-*s %*d\n", length, "magic",
+    fprintf(stderr, "  %-*s %#*x\n", length, "magic",
                 SB_PRINT_ALIGN - length - 1, sb.magic);
     length = (int) strlen("zones");
     fprintf(stderr, "  %-*s %*u\n", length, "zones",
@@ -149,7 +149,7 @@ void read_partition_table(FILE *fp, long base,
         exit(1);
     }
     
-    ret = fread(&table, sizeof(struct part_entry), MAX_PARTS, fp);
+    ret = fread(table, sizeof(struct part_entry), MAX_PARTS, fp);
     if (ret != MAX_PARTS) {
         perror("Failed partition table read");
         exit(1);
@@ -275,7 +275,7 @@ size_t read_dir_indirects(FILE *fp, long base, uint32_t *indirects,
     size_t nzones = zone_size / sizeof(uint32_t);
     uint32_t zones[nzones];
     
-    while (*remaining < DIR_ENTRY_SIZE && cur < nindirect) {
+    while (*remaining >= DIR_ENTRY_SIZE && cur < nindirect) {
         if (indirects[cur] == 0) {
             if (*remaining < (nzones * zone_size)) {
                 *remaining = 0;
@@ -283,6 +283,7 @@ size_t read_dir_indirects(FILE *fp, long base, uint32_t *indirects,
             }
             cur++;
             *remaining -= nzones * zone_size;
+            continue;
         }
 
         ret = fseek(fp, base + indirects[cur] * zone_size, SEEK_SET);
@@ -357,13 +358,29 @@ struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
     size_t n_entries;
     uint32_t cur_idx = 1;
     struct dir_entry cur_entry;
-    char *target = strtok_r(path, "/", &saveptr);
 
+    char *temppath = strdup(path);
+    if (!temppath) {
+        perror("Failed to duplicate fs path");
+        exit(1);
+    }    
+    
+    char *target = strtok_r(temppath, "/", &saveptr);
+    
+    if (target == NULL) {
+        /* Case when the path is the root inode */
+        cur_entry.inode = 1;
+        strncpy((char *)cur_entry.name, "/", MAX_NAME);
+        free(temppath);
+        return cur_entry;
+    }
+    
     while(target != NULL) {
         int found = !FOUND;
         cur_inode = read_inode(fp, base, cur_idx, sb);
         
         if ((cur_inode.mode & TYPE_MASK) != DIR_MASK) {
+            free(temppath);
             perror("Not a Directory");
             exit(1);
         }
@@ -385,13 +402,16 @@ struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
         }
         
         if (!found) {
+            free(temppath);
             perror("Directory not found");
             exit(1);
         }
 
         target = strtok_r(NULL, "/", &saveptr);
     }
-
+    
+    
+    free(temppath);
     return cur_entry;
 }
 
