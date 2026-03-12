@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include "partition-reader.h"
 
 void stringify_perms(uint16_t mode, char perms[PERM_PRINT_SIZE]) {
@@ -60,15 +61,24 @@ void print_inode(struct inode i) {
     length = (int) strlen("size");
     fprintf(stderr, "  uint32_t %-*s %*u\n", length, "size",
                 INODE_PRINT_ALIGN - length - 1, i.size);
+    
     length = (int) strlen("atime");
-    fprintf(stderr, "  uint32_t %-*s %*u\n", length, "atime",
-                INODE_PRINT_ALIGN - length - 1, i.atime);
+    time_t t = (time_t) i.atime;
+    fprintf(stderr, "  uint32_t %-*s %*u --- %s", length, "atime",
+                INODE_PRINT_ALIGN - length - 1, i.atime, 
+                ctime(&t));
+
     length = (int) strlen("mtime");
-    fprintf(stderr, "  uint32_t %-*s %*u\n", length, "mtime",
-                INODE_PRINT_ALIGN - length - 1, i.mtime);
+    t = (time_t) i.mtime;
+    fprintf(stderr, "  uint32_t %-*s %*u --- %s", length, "mtime",
+                INODE_PRINT_ALIGN - length - 1, i.mtime,
+                ctime(&t));
+
     length = (int) strlen("ctime");
-    fprintf(stderr, "  uint32_t %-*s %*u\n", length, "ctime",
-                INODE_PRINT_ALIGN - length - 1, i.ctime);
+    t = (time_t) i.ctime;
+    fprintf(stderr, "  uint32_t %-*s %*u --- %s", length, "ctime",
+                INODE_PRINT_ALIGN - length - 1, i.ctime,
+                ctime(&t));
 
     fprintf(stderr, "\n  Direct zones:\n");
 
