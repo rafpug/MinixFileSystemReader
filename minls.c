@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
             exit(1);
         }
         
-        base += table[part].lFirst * SECTOR_SIZE;
+        base = table[part].lFirst * SECTOR_SIZE;
         
         if(sub != INVALID_PART) {
             read_partition_table(fp, base, table);
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
                 exit(1);
             }
             
-            base += table[sub].lFirst * SECTOR_SIZE;
+            base = table[sub].lFirst * SECTOR_SIZE;
         }
     }
 
