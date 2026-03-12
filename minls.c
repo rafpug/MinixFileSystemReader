@@ -123,9 +123,14 @@ int main(int argc, char **argv) {
     }
     clean_path(fs_path_copy, cleaned_path);
     free(fs_path_copy);
-    
+   
+    if (verbose) {
+        print_sb(sb);
+        print_inode(dest);
+    }
+ 
     if ((dest.mode & TYPE_MASK) == DIR_MASK) {
-        printf("%s:", cleaned_path);
+        printf("%s:\n", cleaned_path);
         
         struct dir_entry entries[dest.size / DIR_ENTRY_SIZE];
         size_t n_entries = read_dir(fp, base, dest, 
@@ -146,10 +151,6 @@ int main(int argc, char **argv) {
         print_ls(dest, cleaned_path);
     }
 
-    if (verbose) {
-        print_sb(sb);
-        print_inode(dest);
-    }
     return 0;
 }
 
