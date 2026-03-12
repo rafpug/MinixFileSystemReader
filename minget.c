@@ -3,7 +3,126 @@
 #include <string.h>
 #include "partition-reader.h"
 
-size_t 
+/* minget.c serves as the source file for the minget cmd
+ * 
+ * minget copies a regular file from the given source path to the given
+ * destination path
+ *
+ * if nodestination path is given, then the file is copied to stdout */
+
+
+
+/* Error checking wrapper for fwrite */
+void wrap_fwrite(void *ptr, size_t size, size_t nmemb, FILE *fp) {
+    size_t nwritten;
+    nwritten = fwrite(ptr, size, nmemb, fp);
+
+    if (nwritten != nmemb) {
+        perror("Failed to write to destination");
+        exit(1);
+    }
+}
+
+/* Reads the list of given zones from the image and writes them into
+ * the destination file
+ * Returns the leftover number of bytes */
+uint32_t rw_reg_zones(FILE *image_fp, long base, uint32_t *zones, 
+                            size_t nzones, size_t zone_size, 
+                            uint32_t remaining, FILE *dst_fp) {
+    int ret;
+    size_t nread;
+    size_t nwritten;
+    size_t cur_zone = 0;
+    unsigned char buf[zone_size];
+    
+    /* Loops until no more zones or no more expected data */
+    while (remaining && cur_zone < nzones) {
+        if (zones[cur_zon] == 0) {
+            /* Any zone# 0 is treated as full of zero
+             * so we write the chunk of '\0' to the dst file */
+    
+            memset(buf, 0, zone_size);
+            
+            if (remaining < zone_size) {
+                wrap_fwrite(buf, sizeof(char), remaining, dst_fp);
+                remaining = 0;
+                break;
+            }
+            else {
+                wrap_fwrite(buf, sizeof(char), zone_size, dst_fp);
+                cur_zone++;
+                remaining -= zone_size;
+                continue;
+            }
+        }
+
+        ret = fseek(image_fp, base + zones[cur_zone] * zone_size, SEEK_SET);
+
+        if (ret) {
+            perror("Failed minget zone seek");
+            exit(1);
+        }
+
+        if (remaining < zone_size) {
+            /* Only part of the zone needs to be read for the data */
+            
+            nread = fread(buf, sizeof(char), remaining, image_fp);
+            if (nread != remaining) {
+                perror("Failed minget partial zone read");
+                exit(1);
+            }
+            
+            wrap_fwrite(buf, sizeof(char), nread, dst_fp);
+
+            cur_zone++;
+            remaining = 0;
+            break;
+        }
+        else {
+            /* Reads the full zone worth of data */
+            
+            nread = fread(buf, sizeof(char), zone_size, image_fp);
+            if (nread != zone_size) {
+                perror("Failed minget full zone read");
+                exit(1);
+            }
+
+            wrap_fwrite(buf, sizeof(char), nread, dst_fp);
+
+            cur_zone++;
+            remaining -= zone_size;
+        }
+    }
+    return remaining;
+}
+
+/* Reads the data from the given list of indirects from the given image and
+ * writes them into the given destination file
+ * Returns the amount of remaining data */
+uint32_t rw_reg_indirects(FILE *image_fp, long base, uint32_t *indirects,
+                            size_t zone_size, uint32_t remaining, 
+                            size_t nindirect, uint16_t blocksize, 
+                            FILE *dst_fp) {
+    int ret,
+    size_t nread;
+    size_t cur_indirect = 0;
+    size_t nzones = blocksize / sizeof(uint32_t);
+    uint32_t zones[nzones];
+    unsigned char buf[nzones * zone_size];
+        
+
+    while (remaining && cur < nindirect) {
+        if (indirects[cur] == 0) {
+            /* Writes an entire indirect block worth of zeros
+             * up to the remaining amount of data */
+
+            if (remaining < (nzones * zone_size)) {
+                remaining = 0
+                
+        
+            
+            
+}
 
 int main(int argc, char **argv) {
     int verbose = !VERBOSE;
