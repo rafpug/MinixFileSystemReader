@@ -43,10 +43,13 @@ int main(int argc, char **argv) {
         switch (opt) {
             case 'v':
                 verbose = VERBOSE;
+                break;
             case 'p':
                 part = my_strtol(optarg);
+                break;
             case 's':
                 sub = my_strtol(optarg);
+                break;
             case 'h':
             default:
                 perror("Some help");
@@ -78,10 +81,22 @@ int main(int argc, char **argv) {
     if(part != INVALID_PART) {
  
         read_partition_table(fp, base, table);
+        
+        if (table[part].type != MINIX_TYPE) {
+            perror("Not a MINIX partition");
+            exit(1);
+        }
+        
         base += table[part].lFirst * SECTOR_SIZE;
         
         if(sub != INVALID_PART) {
             read_partition_table(fp, base, table);
+
+            if (table[sub].type != MINIX_TYPE) {
+                perror("Not a MINIX subpartition");
+                exit(1);
+            }
+            
             base += table[sub].lFirst * SECTOR_SIZE;
         }
     }
@@ -93,7 +108,15 @@ int main(int argc, char **argv) {
     
     char cleaned_path[strlen(fs_path) + 1];
     cleaned_path[strlen(fs_path)] = '\0';
-    clean_path(fs_path, cleaned_path);
+
+    char *fs_path_copy = strdup(fs_path);
+
+    if (!fs_path_copy) {
+        perror("Failed to duplicate string");
+        exit(1);
+    }
+    clean_path(fs_path_copy, cleaned_path);
+    free(fs_path_copy);
     
     if ((dest.mode & TYPE_MASK) == DIR_MASK) {
         printf("%s:", cleaned_path);

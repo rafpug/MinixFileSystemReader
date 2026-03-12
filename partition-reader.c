@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -34,7 +35,7 @@ void print_zones(struct inode inode) {
     for (i=0; i < DIRECT_ZONES; i++) {
         
         fprintf(stderr, "%*szone[%d]    = %*u\n", ZONE_PRINT_PADDING, " ",
-                   ZONE_PRINT_ALIGN - length, inode.zone[i]);
+                   i, ZONE_PRINT_ALIGN - length, inode.zone[i]);
     }
 } 
 
@@ -80,7 +81,7 @@ void print_inode(struct inode i) {
     length = (int) strlen("double");
     fprintf(stderr, "%-*s%-*s %*u\n", ZONE_PRINT_PADDING, "  uint32_t",
                 length, "double",
-                ZONE_PRINT_ALIGNE - length - 1, i.two_indirect);
+                ZONE_PRINT_ALIGN - length - 1, i.two_indirect);
 }
 
 void print_sb(struct superblock sb) {
@@ -119,7 +120,7 @@ void print_sb(struct superblock sb) {
                 SB_PRINT_ALIGN - length - 1, sb.blocksize);
     length = (int) strlen("subversion");
     fprintf(stderr, "  %-*s %*u\n", length, "subversion",
-                SB_PRINT_ALIGN - length - 1, sb.subversion)
+                SB_PRINT_ALIGN - length - 1, sb.subversion);
 }
 
 void read_partition_table(FILE *fp, long base, 
@@ -153,11 +154,6 @@ void read_partition_table(FILE *fp, long base,
         perror("Failed partition table read");
         exit(1);
     }
-
-    if (table.type != MINIX_TYPE) {
-        perror("Not a MINIX partition");
-        exit(1);
-    }
 }
     
 struct superblock read_superblock(FILE *fp, long base) {
@@ -186,8 +182,8 @@ struct superblock read_superblock(FILE *fp, long base) {
 
 struct inode read_inode(FILE *fp, long base, uint32_t index, 
                             struct superblock sb) {
-    long table-offset;
-    long inode-offset;
+    long table_offset;
+    long inode_offset;
     int ret;
     size_t nread;
     struct inode i;
@@ -197,10 +193,10 @@ struct inode read_inode(FILE *fp, long base, uint32_t index,
         exit(1);
     }
     
-    table-offset = (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
-    inode-offset = table-offset + (sizeof(struct inode) * (index - 1));
+    table_offset = (2 + sb.i_blocks + sb.z_blocks) * sb.blocksize;
+    inode_offset = table_offset + (sizeof(struct inode) * (index - 1));
 
-    ret = fseek(fp, base + inode-offset, SEEK_SET);
+    ret = fseek(fp, base + inode_offset, SEEK_SET);
     if (ret) {
         perror("Failed inode seek");
         exit(1);
@@ -215,16 +211,16 @@ struct inode read_inode(FILE *fp, long base, uint32_t index,
     return i;
 }
 
-size_t read_dir_zones(FILE *p, long base, uint32_t *zones, size_t nzones, 
+size_t read_dir_zones(FILE *fp, long base, uint32_t *zones, size_t nzones, 
                         size_t zone_size, struct dir_entry* table, 
                         uint32_t *remaining) {
     int ret;
     size_t nread;
     size_t entries;
     size_t cnt = 0;
-    int cur_zone = 0;
+    size_t cur_zone = 0;
 
-    while (remaining >= DIR_ENTRY_SIZE && cur_zone < nzones) {
+    while (*remaining >= DIR_ENTRY_SIZE && cur_zone < nzones) {
         if (zones[cur_zone] == 0) {
             if (*remaining < zone_size) {
                 *remaining = 0;
@@ -241,7 +237,7 @@ size_t read_dir_zones(FILE *p, long base, uint32_t *zones, size_t nzones,
             exit(1);
         }
 
-        if (remaining < zone_size) {
+        if (*remaining < zone_size) {
             entries = *remaining / DIR_ENTRY_SIZE;
             nread = fread(&table[cnt], DIR_ENTRY_SIZE, entries, fp);
             if (nread != entries) {
@@ -286,7 +282,7 @@ size_t read_dir_indirects(FILE *fp, long base, uint32_t *indirects,
                 break;
             }
             cur++;
-            *remaining -= nzones * zone_size
+            *remaining -= nzones * zone_size;
         }
 
         ret = fseek(fp, base + indirects[cur] * zone_size, SEEK_SET);
@@ -356,7 +352,7 @@ size_t read_dir(FILE *fp, long base, struct inode i, size_t zone_size,
 struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
                     char *path) {
     char *saveptr;
-    int i;
+    size_t i;
     struct inode cur_inode;
     size_t n_entries;
     uint32_t cur_idx = 1;
@@ -367,12 +363,12 @@ struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
         int found = !FOUND;
         cur_inode = read_inode(fp, base, cur_idx, sb);
         
-        if (cur_inode.mode & TYPE_MASK != DIR_MASK) {
+        if ((cur_inode.mode & TYPE_MASK) != DIR_MASK) {
             perror("Not a Directory");
             exit(1);
         }
 
-        struct dir_entry table[i.size / DIR_ENTRY_SIZE];
+        struct dir_entry table[cur_inode.size / DIR_ENTRY_SIZE];
 
         n_entries = read_dir(fp, base, cur_inode, 
                                 sb.blocksize << sb.log_zone_size,
@@ -381,7 +377,7 @@ struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
         for (i=0; i < n_entries; i++) {
             cur_entry = table[i];
             
-            if (strncmp(table[i].name, target, MAX_NAME) == 0) {
+            if (strncmp((char *) table[i].name, target, MAX_NAME) == 0) {
                 cur_idx = table[i].inode;
                 found = FOUND;
                 break;
@@ -393,7 +389,7 @@ struct dir_entry navigate_fs(FILE *fp, long base, struct superblock sb,
             exit(1);
         }
 
-        target = str_tok_r(NULL, "/", &saveptr);
+        target = strtok_r(NULL, "/", &saveptr);
     }
 
     return cur_entry;
