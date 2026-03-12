@@ -108,21 +108,63 @@ uint32_t rw_reg_indirects(FILE *image_fp, long base, uint32_t *indirects,
     size_t cur_indirect = 0;
     size_t nzones = blocksize / sizeof(uint32_t);
     uint32_t zones[nzones];
-    unsigned char buf[nzones * zone_size];
         
 
     while (remaining && cur < nindirect) {
         if (indirects[cur] == 0) {
             /* Writes an entire indirect block worth of zeros
              * up to the remaining amount of data */
+            memset(buf, 0, nzones * zone_size);
 
             if (remaining < (nzones * zone_size)) {
-                remaining = 0
-                
+                wrap_fwrite(buf, sizeof(char), remaining, dst_fp);
+                remaining = 0;
+                break;
+            }
+            else {
+                wrap_fwrite(buf, sizeof(char), zone_size, dst_fp);
+                cur_indirect++;
+                remaining -= nzones * zone_size;
+                continue;
+            }
+        }
         
+        /* Indirect is read as a list of zones */
+        ret = fseek(image_fp, base + indirects[cur_indirect] * zone_size,
+                        SEEK_SET);
+        if (ret) {
+            perror("Failed minget indirect seek");
+            exit(1);
+        }
+
+        nread = fread(zones, sizeof(uint32_t), nzones, image_fp);
+        if (nread != nzones) {
+            perror("Failed minget indirect read");
+            exit(1);
+        }
             
-            
+        remaining = rw_reg_zones(image_fp, base, zones, nzones, zone_size
+                                    remaining, dst_fp);
+    
+        cur_indirect++;
+    }
+    return remaining;                       
 }
+
+void rw_reg(FILE *image_fp, long base, struct inode i, size_t zone_size,
+                uint16_t blocksize, FILE *dst_fp) {
+    int ret;
+    size_tnread;
+    size_t nindirect = blocksize / sizeof(uint32_t);
+    uint32_t indirects[nindirect];
+    uint32_t remaining = i.size;
+    
+    remaining = rw_reg_zones(image_fp, base, i.zone, DIRECT_ZONES, zone_size,
+                                remaining, dst_fp);
+
+    if (remaining) {
+        remaining = rw_reg_indirects(image_fp, base, 
+
 
 int main(int argc, char **argv) {
     int verbose = !VERBOSE;
