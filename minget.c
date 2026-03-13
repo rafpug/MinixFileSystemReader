@@ -151,6 +151,8 @@ uint32_t rw_reg_indirects(FILE *image_fp, long base, uint32_t *indirects,
     return remaining;                       
 }
 
+/* Reads the given inode as a regular file
+ * Writes the read data into the destination file */
 void rw_reg(FILE *image_fp, long base, struct inode i, size_t zone_size,
                 uint16_t blocksize, FILE *dst_fp) {
     int ret;
@@ -163,7 +165,40 @@ void rw_reg(FILE *image_fp, long base, struct inode i, size_t zone_size,
                                 remaining, dst_fp);
 
     if (remaining) {
-        remaining = rw_reg_indirects(image_fp, base, 
+        /* Reads and writes the indirect for any leftover data */
+        remaining = rw_reg_indirects(image_fp, base, &i.indirect, zone_size,
+                                        remaining, nindirect, blocksize,
+                                        dst_fp);
+    }
+    if (remaining) {
+        /* Reads and writes the double for any leftover data */
+        if (i.two_indirect == 0) {
+            perror("minget exceeded implemented filesize");
+            exit(1);
+        }
+            
+        ret = fseek(image_fp, base + i.two_indirect * zone_size, SEEK_SET);
+        if (ret) {
+            perror("Failed minget two-indirect seek");
+            exit(1);
+        }
+    
+        nread = fread(indirects, sizeof(uint32_t), nindirect, image_fp);
+        if (nread != nindirect) {
+            perror("Failed minget two-indirect read");
+            exit(1);
+        }
+    
+        remaining = rw_reg_indirect(image_fp, base, indirects, zone_size
+                                        remaining, nindirect, blocksize,
+                                        dst_fp);
+
+        if (remaining) {
+            perror("minget exceeded double") {
+            exit(1);
+        }
+    }
+}
 
 
 int main(int argc, char **argv) {
@@ -194,13 +229,13 @@ int main(int argc, char **argv) {
             case 'h':
             default:
                 perror("help");
-                exit(1);
+                return 1;
         }
     }
 
     if (optind >= argc) {
         perror("Some help");
-        exit(1);
+        return 1;
     }
 
     if (part >= MAX_PARTS || sub >= MAX_PARTS) {
@@ -239,6 +274,9 @@ int main(int argc, char **argv) {
     image_fp = fopen(image_path, "rb");
     
     if (!image_fp) {
+        if (dst_fp != stdout) {
+            free(dst_fp);
+        }
         perror("Failed to open image");
         exit(1);
     }
@@ -256,9 +294,14 @@ int main(int argc, char **argv) {
     }
     
     if ((dest.mode & TYPE_MASK) == REG_MASK) {
-        
+        rw_reg(image_fp, base, src, sb.blocksize << sb.log_zone_size,
+                sb.blocksize, dst_fp);
     }
     else {
+        fclose(image_fp);
+        if (dst_fp != stdout) {
+            fclose(dst_fp);
+        }
         perror("Not a regular file");
         exit(1);
     }

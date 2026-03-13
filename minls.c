@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
         struct dir_entry entries[dest.size / DIR_ENTRY_SIZE];
         size_t n_entries = read_dir(fp, base, dest, 
                                         sb.blocksize << sb.log_zone_size, 
-                                        entries);
+                                        entries, sb.blocksize);
         size_t i;
         for (i = 0; i < n_entries; i++) {
             if (entries[i].inode == 0) {
