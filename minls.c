@@ -155,7 +155,8 @@ int main(int argc, char **argv) {
         /* If its just a regular file then we just print the ls of it alone */
         print_ls(dest, cleaned_path);
     }
-
+    
+    fclose(fp);
     return 0;
 }
 
