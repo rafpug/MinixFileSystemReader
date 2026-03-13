@@ -123,7 +123,8 @@ uint32_t rw_reg_indirects(FILE *image_fp, long base, uint32_t *indirects,
                 break;
             }
             else {
-                wrap_fwrite(buf, sizeof(char), zone_size, dst_fp);
+                wrap_fwrite(buf, sizeof(char), zone_size * nzones,
+                                dst_fp);
                 cur_indirect++;
                 remaining -= nzones * zone_size;
                 continue;
@@ -168,7 +169,7 @@ void rw_reg(FILE *image_fp, long base, struct inode i, size_t zone_size,
     if (remaining) {
         /* Reads and writes the indirect for any leftover data */
         remaining = rw_reg_indirects(image_fp, base, &i.indirect, zone_size,
-                                        remaining, nindirect, blocksize,
+                                        remaining, 1, blocksize,
                                         dst_fp);
     }
     if (remaining) {

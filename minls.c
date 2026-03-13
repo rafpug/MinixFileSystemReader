@@ -34,8 +34,10 @@ void clean_path(char *old, char *new) {
     }
 
     if (cur == 0) {
-        new[cur] = '/';
+        new[cur++] = '/';
     }
+
+    new[cur] = '\0';
 }       
         
 int main(int argc, char **argv) {
@@ -153,7 +155,7 @@ int main(int argc, char **argv) {
     }
     else if ((dest.mode & TYPE_MASK) == REG_MASK) {
         /* If its just a regular file then we just print the ls of it alone */
-        print_ls(dest, cleaned_path);
+        print_ls(dest, cleaned_path + 1);
     }
     
     fclose(fp);
