@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -31,13 +32,12 @@ uint32_t rw_reg_zones(FILE *image_fp, long base, uint32_t *zones,
                             uint32_t remaining, FILE *dst_fp) {
     int ret;
     size_t nread;
-    size_t nwritten;
     size_t cur_zone = 0;
     unsigned char buf[zone_size];
     
     /* Loops until no more zones or no more expected data */
     while (remaining && cur_zone < nzones) {
-        if (zones[cur_zon] == 0) {
+        if (zones[cur_zone] == 0) {
             /* Any zone# 0 is treated as full of zero
              * so we write the chunk of '\0' to the dst file */
     
@@ -103,17 +103,18 @@ uint32_t rw_reg_indirects(FILE *image_fp, long base, uint32_t *indirects,
                             size_t zone_size, uint32_t remaining, 
                             size_t nindirect, uint16_t blocksize, 
                             FILE *dst_fp) {
-    int ret,
+    int ret;
     size_t nread;
     size_t cur_indirect = 0;
     size_t nzones = blocksize / sizeof(uint32_t);
     uint32_t zones[nzones];
         
 
-    while (remaining && cur < nindirect) {
-        if (indirects[cur] == 0) {
+    while (remaining && cur_indirect < nindirect) {
+        if (indirects[cur_indirect] == 0) {
             /* Writes an entire indirect block worth of zeros
              * up to the remaining amount of data */
+            unsigned char buf[nzones * zone_size];
             memset(buf, 0, nzones * zone_size);
 
             if (remaining < (nzones * zone_size)) {
@@ -143,7 +144,7 @@ uint32_t rw_reg_indirects(FILE *image_fp, long base, uint32_t *indirects,
             exit(1);
         }
             
-        remaining = rw_reg_zones(image_fp, base, zones, nzones, zone_size
+        remaining = rw_reg_zones(image_fp, base, zones, nzones, zone_size,
                                     remaining, dst_fp);
     
         cur_indirect++;
@@ -156,7 +157,7 @@ uint32_t rw_reg_indirects(FILE *image_fp, long base, uint32_t *indirects,
 void rw_reg(FILE *image_fp, long base, struct inode i, size_t zone_size,
                 uint16_t blocksize, FILE *dst_fp) {
     int ret;
-    size_tnread;
+    size_t nread;
     size_t nindirect = blocksize / sizeof(uint32_t);
     uint32_t indirects[nindirect];
     uint32_t remaining = i.size;
@@ -189,12 +190,12 @@ void rw_reg(FILE *image_fp, long base, struct inode i, size_t zone_size,
             exit(1);
         }
     
-        remaining = rw_reg_indirect(image_fp, base, indirects, zone_size
+        remaining = rw_reg_indirects(image_fp, base, indirects, zone_size,
                                         remaining, nindirect, blocksize,
                                         dst_fp);
 
         if (remaining) {
-            perror("minget exceeded double") {
+            perror("minget exceeded double");
             exit(1);
         }
     }
@@ -209,7 +210,6 @@ int main(int argc, char **argv) {
     char *src_path;
     char *dst_path = NULL;
     int opt;
-    struct part_entry table[MAX_PARTS];
     struct superblock sb;
     long base = 0;
     FILE *image_fp;
@@ -239,15 +239,15 @@ int main(int argc, char **argv) {
     }
 
     if (part >= MAX_PARTS || sub >= MAX_PARTS) {
-        fprintf(stderr, "Invalid parition index\m");
+        fprintf(stderr, "Invalid parition index\n");
         return 1;
     }
     
     if (optind < argc) {
-        image_path = arv[optind++];
+        image_path = argv[optind++];
     }
     else {
-        fprintf(stderr, "Missing image path");
+        fprintf(stderr, "Missing image path\n");
         return 1;
     }
 
@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
         src_path = argv[optind++];
     }
     else {
-        fprintf(stderr, "Missing src path");
+        fprintf(stderr, "Missing src path\n");
         return 1;
     }
 
@@ -290,12 +290,17 @@ int main(int argc, char **argv) {
     
     if (verbose) {
         print_sb(sb);
-        print_inode(dest);
+        print_inode(src);
     }
     
-    if ((dest.mode & TYPE_MASK) == REG_MASK) {
+    if ((src.mode & TYPE_MASK) == REG_MASK) {
         rw_reg(image_fp, base, src, sb.blocksize << sb.log_zone_size,
                 sb.blocksize, dst_fp);
+        fclose(image_fp);
+        if (dst_fp != stdout) {
+            fclose(dst_fp);
+        }
+        return 0;
     }
     else {
         fclose(image_fp);
@@ -305,5 +310,4 @@ int main(int argc, char **argv) {
         perror("Not a regular file");
         exit(1);
     }
-    return 0;
 }

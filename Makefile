@@ -1,12 +1,18 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99
 
-all : minls
+all : minls minget
 
 minls : minls.o partition-reader.o
 	$(CC) $^ -o $@
 
+minget : minget.o partition-reader.o
+	$(CC) $^ -o $@
+
 minls.o : minls.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+minget.o : minget.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 partition-reader.o : partition-reader.c

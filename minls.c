@@ -76,7 +76,13 @@ int main(int argc, char **argv) {
         exit(1);
     }
     
-    image_path = argv[optind++];
+    if (optind < argc) { 
+        image_path = argv[optind++];
+    }
+    else {
+        perror("Not given image");
+        exit(1);
+    }
 
     if (optind < argc) {
         fs_path = argv[optind];
