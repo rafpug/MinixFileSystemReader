@@ -1,3 +1,7 @@
 Written by Rafael Salcedo (salcedop)
 
 Run 'make all' to build 'minls' and 'minget' executables
+
+Read the beginning of minls.c and minget.c to get specific info of their purpose.
+Both 'minls' and 'minget' have the ability to read through a disk image 
+and reads through the MINIX filesystem within the image.
